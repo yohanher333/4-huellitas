@@ -388,8 +388,15 @@ export const useHistoryPDF = () => {
             doc.text(`Fecha: ${format(new Date(), "d/MM/yyyy HH:mm", { locale: es })}`, 105, footerY + 32, { align: 'center' });
             doc.text(`ID: ${record.id?.substring(0, 8) || 'N/A'}`, 195, footerY + 32, { align: 'right' });
             
-            // Guardar el archivo
-            const fileName = `registro_${pet.name.replace(/[^a-zA-Z0-9]/g, '_')}_${record.record_type}_${format(parseISO(record.record_date), 'yyyy_MM_dd', { locale: es })}.pdf`;
+            // Guardar el archivo con tipo traducido al español
+            const recordTypeTranslations = {
+                'grooming': 'peluqueria',
+                'vaccination': 'vacunacion',
+                'deworming': 'desparasitacion',
+                'general': 'general'
+            };
+            const recordTypeInSpanish = recordTypeTranslations[record.record_type] || record.record_type;
+            const fileName = `registro_${pet.name.replace(/[^a-zA-Z0-9]/g, '_')}_${recordTypeInSpanish}_${format(parseISO(record.record_date), 'yyyy_MM_dd', { locale: es })}.pdf`;
             doc.save(fileName);
             
             toast({

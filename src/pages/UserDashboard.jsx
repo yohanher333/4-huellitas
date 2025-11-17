@@ -1158,7 +1158,11 @@ const UserDashboard = ({ user, onLogout }) => {
   };
   
   const DashboardHome = () => {
-    const upcomingAppointment = appointments.find(app => isFuture(new Date(app.appointment_time)) && app.status === 'scheduled');
+    // Obtener la cita más cercana (próxima cita futura ordenada por fecha)
+    const upcomingAppointment = appointments
+      .filter(app => isFuture(new Date(app.appointment_time)) && app.status === 'scheduled')
+      .sort((a, b) => new Date(a.appointment_time) - new Date(b.appointment_time))[0];
+    
     return(
     <motion.div 
       initial={{ opacity: 0 }} 
@@ -1216,7 +1220,7 @@ const UserDashboard = ({ user, onLogout }) => {
             transition={{ delay: 0.1, duration: 0.3 }}
           >
             <Button 
-              onClick={() => navigate('/book-appointment')} 
+              onClick={() => navigate('/book-appointment?fresh=true')} 
               className="w-full h-28 bg-gradient-to-br from-[#F26513] to-[#ff7a47] hover:from-[#F26513]/90 hover:to-[#ff7a47]/90 flex-col gap-3 shadow-xl border-none transform hover:scale-105 transition-all duration-300"
             >
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -1389,7 +1393,7 @@ const UserDashboard = ({ user, onLogout }) => {
               </div>
             </div>
             <Button 
-              onClick={() => navigate('/book-appointment')}
+              onClick={() => navigate('/book-appointment?fresh=true')}
               className="bg-gradient-to-r from-[#F26513] to-[#ff7a47] hover:from-[#F26513]/90 hover:to-[#ff7a47]/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >
               <Plus className="w-4 h-4 mr-2"/>
@@ -1488,7 +1492,7 @@ const UserDashboard = ({ user, onLogout }) => {
               {/* Botones de acción */}
               <div className="space-y-4">
                 <Button 
-                  onClick={() => navigate('/book-appointment')}
+                  onClick={() => navigate('/book-appointment?fresh=true')}
                   className="w-full bg-gradient-to-r from-[#0378A6] to-[#F26513] hover:from-[#0378A6]/90 hover:to-[#F26513]/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 py-4 text-lg font-semibold"
                 >
                   <CalendarIcon className="w-5 h-5 mr-2"/>

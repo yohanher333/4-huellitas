@@ -139,7 +139,7 @@ const LandingPage = () => {
                 En 4huellitas, combinamos la pasión por los animales con la medicina veterinaria de vanguardia para ofrecer un servicio integral y de confianza.
               </p>
               <div className="flex gap-4">
-                <Button onClick={() => navigate('/book-appointment')} size="lg" className="h-12 text-lg bg-[#F26513] hover:bg-[#F26513]/90">Agenda una cita</Button>
+                <Button onClick={() => navigate('/book-appointment?fresh=true')} size="lg" className="h-12 text-lg bg-[#F26513] hover:bg-[#F26513]/90">Agenda una cita</Button>
                 <Button onClick={() => navigate('/services')} size="lg" variant="outline" className="h-12 text-lg">Nuestros Servicios</Button>
               </div>
             </motion.div>

@@ -131,7 +131,7 @@ const ServicesPage = () => {
                         transition={{ duration: 0.5, delay: 0.4 }}
                     >
                         <Button 
-                            onClick={() => navigate('/book-appointment')} 
+                            onClick={() => navigate('/book-appointment?fresh=true')} 
                             size="lg" 
                             className="h-14 text-lg bg-white text-[#0378A6] hover:bg-gray-200 shadow-lg"
                         >

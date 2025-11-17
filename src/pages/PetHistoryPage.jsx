@@ -523,7 +523,7 @@ const PetHistoryPage = () => {
                                 >
                                     <Stethoscope className="w-4 h-4 mr-2"/>
                                     <span className="hidden sm:inline">Desparasitación</span>
-                                    <span className="sm:hidden">Deworm</span>
+                                    <span className="sm:hidden">Desparasitación</span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="general"

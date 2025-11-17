@@ -48,7 +48,7 @@ const Header = ({ user, onLogout }) => {
           ) : (
             <>
               <Button variant="ghost" onClick={() => navigate('/login')}>Iniciar Sesión</Button>
-              <Button onClick={() => navigate('/book-appointment')} className="bg-[#F26513] hover:bg-[#F26513]/90 flex items-center gap-2">
+              <Button onClick={() => navigate('/book-appointment?fresh=true')} className="bg-[#F26513] hover:bg-[#F26513]/90 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Agendar Cita
               </Button>

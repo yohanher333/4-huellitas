@@ -21,6 +21,7 @@ import QRCode from 'qrcode';
 // Funciones de persistencia fuera del componente para disponibilidad inmediata
 const CONFIRMATION_STORAGE_KEY_NEW = 'appointmentConfirmationDataNew';
 const CONFIRMATION_STORAGE_KEY = 'appointmentConfirmationData'; // Legacy key
+const CONFIRMATION_DISMISSED_KEY = 'appointmentConfirmationDismissed'; // Para rastrear si el usuario cerró la confirmación
 
 const saveConfirmationData = (appointmentData, currentStep) => {
   try {
@@ -85,9 +86,28 @@ const clearConfirmationData = () => {
   try {
     localStorage.removeItem(CONFIRMATION_STORAGE_KEY_NEW);
     localStorage.removeItem(CONFIRMATION_STORAGE_KEY); // También limpiar legacy
+    localStorage.removeItem(CONFIRMATION_DISMISSED_KEY); // También limpiar marca de cerrado
     console.log('Datos de confirmación limpiados');
   } catch (error) {
     console.error('Error clearing confirmation data:', error);
+  }
+};
+
+const markConfirmationAsDismissed = () => {
+  try {
+    localStorage.setItem(CONFIRMATION_DISMISSED_KEY, 'true');
+    console.log('Confirmación marcada como cerrada por el usuario');
+  } catch (error) {
+    console.error('Error marking confirmation as dismissed:', error);
+  }
+};
+
+const wasConfirmationDismissed = () => {
+  try {
+    return localStorage.getItem(CONFIRMATION_DISMISSED_KEY) === 'true';
+  } catch (error) {
+    console.error('Error checking if confirmation was dismissed:', error);
+    return false;
   }
 };
 
@@ -123,6 +143,22 @@ const AppointmentPage = ({ user }) => {
   useEffect(() => {
     console.log('Iniciando carga de datos de confirmación...');
     
+    // Si viene con parámetro 'fresh', NO cargar datos guardados
+    const isFreshStart = searchParams.get('fresh') === 'true';
+    if (isFreshStart) {
+      console.log('Inicio limpio detectado (fresh=true), omitiendo carga de datos');
+      // Limpiar cualquier dato residual
+      clearConfirmationData();
+      clearLocalStorage();
+      return;
+    }
+    
+    // Si el usuario cerró la confirmación previamente, NO volver a mostrarla
+    if (wasConfirmationDismissed()) {
+      console.log('Usuario cerró la confirmación previamente, omitiendo carga');
+      return;
+    }
+    
     // Intentar cargar datos de confirmación usando el nuevo sistema
     const confirmationData = loadConfirmationData();
     if (confirmationData && confirmationData.appointmentDetails) {
@@ -133,7 +169,7 @@ const AppointmentPage = ({ user }) => {
     }
     
     console.log('No se encontraron datos de confirmación, verificando localStorage legacy...');
-  }, []);
+  }, [searchParams]);
   const [groomingServices, setGroomingServices] = useState([]);
   const [breeds, setBreeds] = useState([]);
   const [haircutStyles, setHaircutStyles] = useState([]);
@@ -151,9 +187,19 @@ const AppointmentPage = ({ user }) => {
   
   // Efecto secundario para cargar otros datos persistidos solo si no hay confirmación
   useEffect(() => {
+    // Si viene con parámetro 'fresh', NO cargar nada
+    const isFreshStart = searchParams.get('fresh') === 'true';
+    if (isFreshStart) {
+      console.log('Inicio limpio detectado, omitiendo carga de datos legacy');
+      return;
+    }
+    
+    // Si el usuario cerró la confirmación, no cargar confirmación pero sí otros datos
+    const wasDismissed = wasConfirmationDismissed();
+    
     // Solo ejecutar si no hemos cargado datos de confirmación
     const confirmationData = loadConfirmationData();
-    if (confirmationData && confirmationData.appointmentDetails) {
+    if (confirmationData && confirmationData.appointmentDetails && !wasDismissed) {
       console.log('Ya se cargaron datos de confirmación, saltando carga de datos legacy');
       return;
     }
@@ -1150,7 +1196,7 @@ Servicio: ${appointmentDetails.service?.name || 'N/A'}`;
                             )}
                           </Button> 
                         ))} </div> ) : <p className="text-center text-sm text-gray-500 pt-8">No hay horarios disponibles para este día.</p> } </motion.div> )} </AnimatePresence> </div> {selectedTime && user && ( <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-6 text-center"> <Button onClick={() => setStep(3)} className="h-12 px-8 text-lg">Continuar</Button> </motion.div> )} </motion.div> );
-      case 3: return ( <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}> <h1 className="text-3xl font-bold font-heading text-gray-800 mb-6 text-center">Confirma los Datos de tu Cita</h1> {user?.is_in_clinton_list && ( <Alert variant="destructive" className="mb-6"> <UserX className="h-4 w-4" /> <AlertTitle>Estás en la Lista Clinton</AlertTitle> <AlertDescription> Para agendar una cita, por favor contáctanos directamente por WhatsApp. </AlertDescription> </Alert> )} {mandatoryConditionalService && ( <Alert className="mb-6 border-yellow-400 text-yellow-800 bg-yellow-50"> <AlertTriangle className="h-4 w-4 !text-yellow-500" /> <AlertTitle className="font-bold">{mandatoryConditionalService.name}</AlertTitle> <AlertDescription> Servicio obligatorio de ser necesario. Su costo se confirmará en tienda. </AlertDescription> </Alert> )} <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> <div className="space-y-4 bg-white p-6 rounded-2xl shadow-md"> <h3 className="font-bold text-lg border-b pb-2">Detalles de la Mascota</h3> {(userPets.length > 0) ? ( <div className="space-y-1"> <Label className="font-subheading">Mascota</Label> <Select onValueChange={value => setSelectedPetId(value)} value={selectedPetId}> <SelectTrigger><SelectValue placeholder="Selecciona tu mascota..." /></SelectTrigger> <SelectContent>{userPets.map(pet => <SelectItem key={pet.id} value={pet.id}>{pet.name} ({pet.species})</SelectItem>)}</SelectContent> </Select> <Button variant="link" className="p-0 h-auto text-sm" onClick={() => { setSelectedPetId(''); setUserData(prev => ({...prev, petName: '', breedId: ''}))}}>O añadir una nueva mascota</Button> </div> ) : null } { selectedPetId === '' && (<div className="space-y-4 mt-4 pt-4 border-t"><div className="space-y-1"><Label className="font-subheading">Nombre de la Nueva Mascota</Label><Input value={userData.petName} onChange={e => setUserData({...userData, petName: e.target.value})} /></div><div className="space-y-1"><Label className="font-subheading">Raza</Label><Select onValueChange={value => setUserData({...userData, breedId: value})}><SelectTrigger><SelectValue placeholder="Selecciona una raza..." /></SelectTrigger><SelectContent>{breeds.map(breed => <SelectItem key={breed.id} value={breed.id}>{breed.name}</SelectItem>)}</SelectContent></Select></div></div>)} </div> <div className="space-y-4 bg-white p-6 rounded-2xl shadow-md"> <h3 className="font-bold text-lg border-b pb-2 flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#F26513]" /> Personaliza tu Servicio</h3> {defaultService && ( <div className="mb-4 p-3 bg-gradient-to-r from-[#0378A6]/10 to-[#F26513]/10 rounded-lg border border-[#0378A6]/20"> <div className="flex items-center justify-between"> <span className="font-medium text-gray-800">{defaultService.name}</span> <span className="text-lg font-bold text-[#0378A6]"> {defaultService.price_by_breed ? 'Según raza y estilo' : `$${defaultService.base_price?.toLocaleString() || 'Consultar'}`} </span> </div> <p className="text-xs text-gray-600 mt-1">Servicio base - El precio final se confirma en tienda</p> </div> )} {defaultService?.price_by_breed && haircutStyles.length > 0 && ( <div className="space-y-2"> <Label className="font-subheading">Estilos de Corte Disponibles (Informativo)</Label> <Alert variant="default" className="text-sm mb-2"><AlertDescription>El estilo y precio final se confirman en tienda.</AlertDescription></Alert> <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2"> {haircutStyles.map(stylePrice => ( <div key={stylePrice.style.id} className="flex flex-col h-auto text-center py-3 px-3 border rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 transition-colors"> <span className="font-medium text-gray-800 mb-1">{stylePrice.style.name}</span> <span className="text-sm font-bold text-[#0378A6]">${stylePrice.price?.toLocaleString() || 'Consultar'}</span> </div> ))} </div> </div> )} {additionalServices.filter(s => !s.is_mandatory_conditional).length > 0 && ( <div className="space-y-2"> <Label className="font-subheading">Servicios Adicionales (Informativo)</Label> <Alert variant="default" className="mt-2 text-sm"><AlertDescription>Su necesidad y costo se confirmarán en la tienda.</AlertDescription></Alert> </div> )} </div> </div> <Button onClick={handleGoToConfirmation} disabled={loading || (!selectedPetId && (!userData.petName || !userData.breedId)) } className="w-full mt-6 h-12 text-lg bg-[#F26513] hover:bg-[#F26513]/90">{loading ? 'Confirmando...' : 'Confirmar y Agendar'}</Button> </motion.div> );
+      case 3: return ( <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}> <h1 className="text-3xl font-bold font-heading text-gray-800 mb-6 text-center">Confirma los Datos de tu Cita</h1> {user?.is_in_clinton_list && ( <Alert variant="destructive" className="mb-6"> <UserX className="h-4 w-4" /> <AlertTitle>Estás en la Lista Negra</AlertTitle> <AlertDescription> Para agendar una cita, por favor contáctanos directamente por WhatsApp. </AlertDescription> </Alert> )} {mandatoryConditionalService && ( <Alert className="mb-6 border-yellow-400 text-yellow-800 bg-yellow-50"> <AlertTriangle className="h-4 w-4 !text-yellow-500" /> <AlertTitle className="font-bold">{mandatoryConditionalService.name}</AlertTitle> <AlertDescription> Servicio obligatorio de ser necesario. Su costo se confirmará en tienda. </AlertDescription> </Alert> )} <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> <div className="space-y-4 bg-white p-6 rounded-2xl shadow-md"> <h3 className="font-bold text-lg border-b pb-2">Detalles de la Mascota</h3> {(userPets.length > 0) ? ( <div className="space-y-1"> <Label className="font-subheading">Mascota</Label> <Select onValueChange={value => setSelectedPetId(value)} value={selectedPetId}> <SelectTrigger><SelectValue placeholder="Selecciona tu mascota..." /></SelectTrigger> <SelectContent>{userPets.map(pet => <SelectItem key={pet.id} value={pet.id}>{pet.name} ({pet.species})</SelectItem>)}</SelectContent> </Select> <Button variant="link" className="p-0 h-auto text-sm" onClick={() => { setSelectedPetId(''); setUserData(prev => ({...prev, petName: '', breedId: ''}))}}>O añadir una nueva mascota</Button> </div> ) : null } { selectedPetId === '' && (<div className="space-y-4 mt-4 pt-4 border-t"><div className="space-y-1"><Label className="font-subheading">Nombre de la Nueva Mascota</Label><Input value={userData.petName} onChange={e => setUserData({...userData, petName: e.target.value})} /></div><div className="space-y-1"><Label className="font-subheading">Raza</Label><Select onValueChange={value => setUserData({...userData, breedId: value})}><SelectTrigger><SelectValue placeholder="Selecciona una raza..." /></SelectTrigger><SelectContent>{breeds.map(breed => <SelectItem key={breed.id} value={breed.id}>{breed.name}</SelectItem>)}</SelectContent></Select></div></div>)} </div> <div className="space-y-4 bg-white p-6 rounded-2xl shadow-md"> <h3 className="font-bold text-lg border-b pb-2 flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#F26513]" /> Personaliza tu Servicio</h3> {defaultService && ( <div className="mb-4 p-3 bg-gradient-to-r from-[#0378A6]/10 to-[#F26513]/10 rounded-lg border border-[#0378A6]/20"> <div className="flex items-center justify-between"> <span className="font-medium text-gray-800">{defaultService.name}</span> <span className="text-lg font-bold text-[#0378A6]"> {defaultService.price_by_breed ? 'Según raza y estilo' : `$${defaultService.base_price?.toLocaleString() || 'Consultar'}`} </span> </div> <p className="text-xs text-gray-600 mt-1">Servicio base - El precio final se confirma en tienda</p> </div> )} {defaultService?.price_by_breed && haircutStyles.length > 0 && ( <div className="space-y-2"> <Label className="font-subheading">Estilos de Corte Disponibles (Informativo)</Label> <Alert variant="default" className="text-sm mb-2"><AlertDescription>El estilo y precio final se confirman en tienda.</AlertDescription></Alert> <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2"> {haircutStyles.map(stylePrice => ( <div key={stylePrice.style.id} className="flex flex-col h-auto text-center py-3 px-3 border rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 transition-colors"> <span className="font-medium text-gray-800 mb-1">{stylePrice.style.name}</span> <span className="text-sm font-bold text-[#0378A6]">${stylePrice.price?.toLocaleString() || 'Consultar'}</span> </div> ))} </div> </div> )} {additionalServices.filter(s => !s.is_mandatory_conditional).length > 0 && ( <div className="space-y-2"> <Label className="font-subheading">Servicios Adicionales (Informativo)</Label> <Alert variant="default" className="mt-2 text-sm"><AlertDescription>Su necesidad y costo se confirmarán en la tienda.</AlertDescription></Alert> </div> )} </div> </div> <Button onClick={handleGoToConfirmation} disabled={loading || (!selectedPetId && (!userData.petName || !userData.breedId)) } className="w-full mt-6 h-12 text-lg bg-[#F26513] hover:bg-[#F26513]/90">{loading ? 'Confirmando...' : 'Confirmar y Agendar'}</Button> </motion.div> );
       case 4: return ( 
         <motion.div key="step4" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
           {/* Celebración header */}
@@ -1242,17 +1288,32 @@ Servicio: ${appointmentDetails.service?.name || 'N/A'}`;
                 </Button>
                 <Button 
                   onClick={() => {
-                    clearConfirmationData(); // Limpiar datos de confirmación primero
+                    // Marcar que el usuario cerró la confirmación
+                    markConfirmationAsDismissed();
+                    
+                    // Limpiar datos de confirmación y localStorage INMEDIATAMENTE
+                    clearConfirmationData();
                     clearLocalStorage();
+                    
+                    // Resetear todos los estados a sus valores iniciales
+                    setAppointmentDetails(null);
                     setStep(1);
                     setSelectedDate(null);
                     setSelectedTime(null);
                     setSelectedPetId('');
                     setSelectedPet(null);
-                    setUserData({ name: user?.name || '', petName: '', breedId: '', breedName: '', document_number: user?.document_number || '', address: user?.address || '' });
-                    setAppointmentDetails(null);
-                    // Forzar refresco de la página para evitar que se quede atascado
-                    window.location.href = '/dashboard/appointments/new';
+                    setUserData({ 
+                      name: user?.name || '', 
+                      petName: '', 
+                      breedId: '', 
+                      breedName: '', 
+                      document_number: user?.document_number || '', 
+                      address: user?.address || '' 
+                    });
+                    setAvailableTimes([]);
+                    
+                    // Navegar con parámetro 'fresh' para indicar inicio limpio
+                    navigate('/dashboard/appointments/new?fresh=true', { replace: true });
                   }}
                   className="h-12 text-lg bg-gradient-to-r from-[#F26513] to-orange-600 hover:from-orange-600 hover:to-orange-700">
                   <CalendarIcon className="w-5 h-5 mr-2" /> 
@@ -1344,6 +1405,8 @@ Servicio: ${appointmentDetails.service?.name || 'N/A'}`;
               variant="ghost" 
               size="icon" 
               onClick={() => {
+                // Marcar que el usuario cerró manualmente la confirmación
+                markConfirmationAsDismissed();
                 clearLocalStorage();
                 navigate('/dashboard');
               }}

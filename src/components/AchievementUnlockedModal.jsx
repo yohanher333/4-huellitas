@@ -10,7 +10,7 @@ const AchievementUnlockedModal = ({ isOpen, onClose, type = 'registration', poin
 
     const handleBookAppointment = () => {
         onClose();
-        navigate('/book-appointment');
+        navigate('/book-appointment?fresh=true');
     };
 
     const handleViewAchievements = () => {

@@ -34,11 +34,23 @@ const OwnerDialog = ({ isOpen, setIsOpen, owner, fetchOwners }) => {
   }, [owner, isOpen]);
 
   const handleSave = async () => {
+    // Validaciones básicas
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast({ title: "Error", description: "Por favor completa nombre, email y teléfono.", variant: "destructive" });
+      return;
+    }
+
     let result;
     if (owner && owner.id) {
+      // Actualizar propietario existente
       result = await supabase
         .from('profiles')
-        .update({ name: formData.name, email: formData.email, phone: formData.phone ?? '', address: formData.address ?? '' })
+        .update({ 
+          name: formData.name, 
+          email: formData.email, 
+          phone: formData.phone ?? '', 
+          address: formData.address ?? '' 
+        })
         .eq('id', owner.id);
       if (result.error) {
         toast({ title: "Error", description: "No se pudo actualizar el propietario.", variant: "destructive" });
@@ -46,26 +58,74 @@ const OwnerDialog = ({ isOpen, setIsOpen, owner, fetchOwners }) => {
       }
       toast({ title: "Éxito", description: "Propietario actualizado correctamente." });
     } else {
-      // 1. Crear usuario en Supabase Auth usando admin API para no cambiar sesión
-      const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
+      // Crear nuevo propietario con cuenta de autenticación
+      // Usar signUp con una contraseña temporal - el usuario podrá cambiarla después
+      const tempPassword = 'Cambiame25';
+      
+      // Guardar la sesión actual del admin
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
-        password: formData.password,
-        user_metadata: { name: formData.name, phone: formData.phone ?? '', address: formData.address ?? '' },
+        password: tempPassword,
+        options: {
+          data: {
+            name: formData.name,
+            phone: formData.phone ?? '',
+            address: formData.address ?? ''
+          }
+        }
       });
-      if (signUpError || !signUpData?.user) {
-        toast({ title: "Error", description: "No se pudo crear el usuario. " + (signUpError?.message || ''), variant: "destructive" });
+      
+      if (signUpError) {
+        toast({ 
+          title: "Error", 
+          description: signUpError.message.includes('already registered') 
+            ? "Ya existe un usuario con ese email." 
+            : "No se pudo crear el usuario: " + signUpError.message, 
+          variant: "destructive" 
+        });
         return;
       }
-      // 2. Crear perfil en profiles con el id del usuario y datos completos
-      const userId = signUpData.user.id;
+
+      if (!signUpData?.user) {
+        toast({ title: "Error", description: "No se pudo crear el usuario.", variant: "destructive" });
+        return;
+      }
+
+      // Restaurar la sesión del admin inmediatamente
+      if (currentSession) {
+        await supabase.auth.setSession({
+          access_token: currentSession.access_token,
+          refresh_token: currentSession.refresh_token
+        });
+      }
+
+      // Crear/actualizar el perfil en profiles
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([{ id: userId, name: formData.name, email: formData.email, phone: formData.phone ?? '', address: formData.address ?? '', role: 'user' }]);
+        .upsert([{ 
+          id: signUpData.user.id,
+          name: formData.name, 
+          email: formData.email, 
+          phone: formData.phone ?? '', 
+          address: formData.address ?? '', 
+          role: 'user'
+        }]);
+      
       if (profileError) {
-        toast({ title: "Error", description: "No se pudo crear el perfil del propietario.", variant: "destructive" });
-        return;
+        toast({ 
+          title: "Advertencia", 
+          description: "Usuario creado pero hubo un problema con el perfil: " + profileError.message, 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ 
+          title: "Éxito", 
+          description: `Propietario creado. Contraseña temporal: ${tempPassword} (compártela con el propietario)`, 
+          duration: 10000 
+        });
       }
-      toast({ title: "Éxito", description: "Propietario creado correctamente." });
     }
     setIsOpen(false);
     fetchOwners();
@@ -78,11 +138,28 @@ const OwnerDialog = ({ isOpen, setIsOpen, owner, fetchOwners }) => {
           <DialogTitle>{owner ? 'Editar Propietario' : 'Añadir Propietario'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div><Label htmlFor="name">Nombre</Label><Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} /></div>
-          <div><Label htmlFor="email">Email</Label><Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} /></div>
-          <div><Label htmlFor="phone">Teléfono</Label><Input id="phone" type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} /></div>
-          <div><Label htmlFor="address">Dirección</Label><Input id="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div>
-          <div><Label htmlFor="password">Contraseña</Label><Input id="password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} /></div>
+          <div>
+            <Label htmlFor="name">Nombre Completo *</Label>
+            <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Nombre del propietario" required />
+          </div>
+          <div>
+            <Label htmlFor="email">Email *</Label>
+            <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="correo@ejemplo.com" required />
+          </div>
+          <div>
+            <Label htmlFor="phone">Teléfono *</Label>
+            <Input id="phone" type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="3001234567" required />
+          </div>
+          <div>
+            <Label htmlFor="address">Dirección</Label>
+            <Input id="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Calle 123 #45-67" />
+          </div>
+          {!owner && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              <p className="font-medium">🔑 Información</p>
+              <p className="mt-1">Se generará una contraseña temporal automática que deberás compartir con el propietario. El propietario podrá cambiarla después.</p>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
