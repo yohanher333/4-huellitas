@@ -159,16 +159,30 @@ const LoginPage = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-gray-600">
-                ¿No tienes cuenta?{' '}
+            <div className="mt-6 space-y-3">
+              <div className="text-center">
                 <button
-                  onClick={() => navigate('/register')}
-                  className="text-[#F26513] font-semibold hover:underline"
+                  type="button"
+                  onClick={() => {
+                    const message = encodeURIComponent('Hola, olvidé mi contraseña y necesito ayuda para recuperar el acceso a mi cuenta.');
+                    window.open(`https://wa.me/573012635719?text=${message}`, '_blank');
+                  }}
+                  className="text-[#0378A6] text-sm font-medium hover:underline"
                 >
-                  Regístrate aquí
+                  ¿Olvidaste tu contraseña?
                 </button>
-              </p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-600">
+                  ¿No tienes cuenta?{' '}
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="text-[#F26513] font-semibold hover:underline"
+                  >
+                    Regístrate aquí
+                  </button>
+                </p>
+              </div>
             </div>
           </div>
         </motion.div>

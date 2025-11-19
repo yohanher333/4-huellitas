@@ -41,6 +41,7 @@ import CompanySettings from '@/components/admin/CompanySettings';
 import ClintonList from '@/components/admin/ClintonList';
 import ProfessionalsManagerNew from '@/components/admin/ProfessionalsManagerNew';
 import CustomTimeSlotManager from '@/components/admin/CustomTimeSlotManager';
+import AnniversaryConfig from '@/components/admin/AnniversaryConfig';
 
 const AdminDashboard = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -67,6 +68,7 @@ const AdminDashboard = ({ user, onLogout }) => {
   { id: 'professionals-manage', label: 'Gestionar Profesionales', icon: UserCheck, path: '/admin/settings/professionals-manage' },
   { id: 'breeds', label: 'Razas y Precios', icon: Palette, path: '/admin/settings/breeds' },
   { id: 'additional-services', label: 'Servicios Adicionales', icon: Scissors, path: '/admin/settings/additional-services' },
+  { id: 'anniversary', label: 'Aniversario', icon: Award, path: '/admin/settings/anniversary' },
   ];
 
   const handleMenuClick = (path) => {
@@ -236,6 +238,7 @@ const AdminDashboard = ({ user, onLogout }) => {
             <Route path="settings/professionals-manage" element={<ProfessionalsManagerNew />} />
             <Route path="settings/breeds" element={<BreedsList />} />
             <Route path="settings/additional-services" element={<AdditionalServicesList />} />
+            <Route path="settings/anniversary" element={<AnniversaryConfig />} />
             <Route path="add-history/:petId/:recordType" element={<AddHistoryPage />} />
             <Route path="add-history/:petId/:recordType/:historyId" element={<AddHistoryPage />} />
             <Route path="settings/company" element={<CompanySettings />} />

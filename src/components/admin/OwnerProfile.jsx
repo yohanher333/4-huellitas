@@ -4,9 +4,19 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/customSupabaseClient';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Mail, Phone, MapPin, Dog } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, User, Mail, Phone, MapPin, Dog, Key } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const OwnerProfile = () => {
   const { id } = useParams();
@@ -14,6 +24,102 @@ const OwnerProfile = () => {
   const [owner, setOwner] = useState(null);
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'La contraseña debe tener al menos 6 caracteres',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'Las contraseñas no coinciden',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      // Actualizar la contraseña directamente en auth.users usando RPC
+      const { error } = await supabase.rpc('admin_update_user_password', {
+        user_id: id,
+        new_password: newPassword
+      });
+
+      if (error) {
+        // Si RPC no existe, intentar con actualización directa del perfil
+        // y notificar que deben usar el enlace de recuperación
+        console.error('RPC error:', error);
+        
+        // Enviar email de recuperación como alternativa
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+          owner.email,
+          {
+            redirectTo: `${window.location.origin}/reset-password`,
+          }
+        );
+
+        if (resetError) throw resetError;
+
+        toast({
+          title: 'Email enviado',
+          description: `Se ha enviado un correo de recuperación a ${owner.email}. El usuario debe seguir el enlace para establecer su nueva contraseña.`,
+        });
+      } else {
+        toast({
+          title: 'Éxito',
+          description: 'Contraseña actualizada correctamente'
+        });
+      }
+
+      setShowPasswordDialog(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Password change error:', error);
+      
+      // Como alternativa final, enviar email de recuperación
+      try {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+          owner.email,
+          {
+            redirectTo: `${window.location.origin}/reset-password`,
+          }
+        );
+
+        if (!resetError) {
+          toast({
+            title: 'Email de recuperación enviado',
+            description: `Se ha enviado un correo de recuperación a ${owner.email}. El usuario puede establecer una nueva contraseña desde allí.`,
+          });
+          setShowPasswordDialog(false);
+          setNewPassword('');
+          setConfirmPassword('');
+        } else {
+          throw new Error('No se pudo enviar el email de recuperación');
+        }
+      } catch (finalError) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo cambiar la contraseña. Por favor, contacta al soporte técnico.',
+          variant: 'destructive'
+        });
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   useEffect(() => {
     const fetchOwnerData = async () => {
@@ -73,15 +179,25 @@ const OwnerProfile = () => {
       </Button>
 
       <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-[#0378A6] to-[#F26513] rounded-full flex items-center justify-center text-white text-4xl font-bold">
-            {owner.name?.charAt(0).toUpperCase()}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="w-24 h-24 bg-gradient-to-br from-[#0378A6] to-[#F26513] rounded-full flex items-center justify-center text-white text-4xl font-bold">
+              {owner.name?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 font-heading">{owner.name}</h1>
+              <p className="text-gray-600">ID: {owner.id.substring(0, 8)}</p>
+              {owner.is_in_clinton_list && <span className="text-xs font-bold bg-red-500 text-white px-2 py-1 rounded-full mt-2 inline-block">EN LISTA NEGRA</span>}
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 font-heading">{owner.name}</h1>
-            <p className="text-gray-600">ID: {owner.id.substring(0, 8)}</p>
-            {owner.is_in_clinton_list && <span className="text-xs font-bold bg-red-500 text-white px-2 py-1 rounded-full mt-2 inline-block">EN LISTA NEGRA</span>}
-          </div>
+          <Button 
+            onClick={() => setShowPasswordDialog(true)}
+            variant="outline"
+            className="border-[#0378A6] text-[#0378A6] hover:bg-[#0378A6] hover:text-white"
+          >
+            <Key className="w-4 h-4 mr-2" />
+            Cambiar Contraseña
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -118,6 +234,64 @@ const OwnerProfile = () => {
           )}
         </div>
       </div>
+
+      {/* Diálogo para cambiar contraseña */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cambiar Contraseña</DialogTitle>
+            <DialogDescription>
+              Establece una nueva contraseña para {owner.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Nueva Contraseña</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                disabled={changingPassword}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repite la contraseña"
+                disabled={changingPassword}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowPasswordDialog(false);
+                setNewPassword('');
+                setConfirmPassword('');
+              }}
+              disabled={changingPassword}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleChangePassword}
+              disabled={changingPassword}
+              className="bg-[#0378A6] hover:bg-[#0378A6]/90"
+            >
+              {changingPassword ? 'Cambiando...' : 'Cambiar Contraseña'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

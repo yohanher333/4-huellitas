@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react';
     import ServicesPage from '@/pages/ServicesPage';
     import ContactPage from '@/pages/ContactPage';
     import CheckAppointmentPage from '@/pages/CheckAppointmentPage';
+    import AnniversaryWheelPage from '@/pages/AnniversaryWheelPage';
     import { Toaster } from '@/components/ui/toaster';
     import Header from '@/components/layout/Header';
     import Footer from '@/components/layout/Footer';
@@ -84,8 +85,12 @@ import React, { useEffect, useState } from 'react';
       }, [user, session, authLoading, navigate, location.pathname, supabaseSignOut]);
     
       const handleLogout = async () => {
-        const { error } = await supabaseSignOut();
-        if (error && error.message !== 'session_not_found') {
+        try {
+          const result = await supabaseSignOut();
+          if (result?.error && result.error.message !== 'session_not_found') {
+            console.error("Logout Error:", result.error);
+          }
+        } catch (error) {
           console.error("Logout Error:", error);
         }
         setProfile(null);
@@ -127,6 +132,9 @@ import React, { useEffect, useState } from 'react';
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/login" element={!session ? <LoginPage /> : <Navigate to={profile?.role === 'admin' ? '/admin' : '/dashboard'} replace />} />
                 <Route path="/register" element={!session ? <RegisterPage /> : <Navigate to="/dashboard" replace />} />
+                
+                {/* Ruta de la ruleta de aniversario - solo para admin */}
+                <Route path="/admin/anniversary-wheel" element={session && profile?.role === 'admin' ? <AnniversaryWheelPage /> : <Navigate to="/login" replace />} />
                 
                 <Route path="/dashboard/*" element={session && profile?.role === 'user' ? <UserDashboard user={userWithProfile} onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
 

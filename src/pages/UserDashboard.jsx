@@ -23,6 +23,7 @@ import PetHistoryPage from '@/pages/PetHistoryPage';
 import AchievementUnlockedModal from '@/components/AchievementUnlockedModal';
 import UserAchievementsHistory from '@/components/UserAchievementsHistory';
 import { usePointsNotification } from '@/hooks/usePointsNotificationSimple';
+import WelcomeWheelModal from '@/components/WelcomeWheelModal';
 
 // Función para redimensionar imágenes
 const resizeImage = (file, maxWidth = 800, maxHeight = 600, quality = 0.8) => {
@@ -1049,8 +1050,85 @@ const UserDashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Estados para la ruleta de bienvenida
+  const [showWheelModal, setShowWheelModal] = useState(false);
+  const [shouldShowWheel, setShouldShowWheel] = useState(false);
+
   // Hook para notificaciones de puntos
   const { showModal, modalConfig, closeModal, checkWelcomePoints } = usePointsNotification(user);
+
+  // Verificar si debe mostrar la ruleta (nuevo usuario con registro)
+  useEffect(() => {
+    const checkWheelEligibility = async () => {
+      if (!user?.id) return;
+
+      console.log('🎰 Verificando elegibilidad para ruleta...');
+
+      // Verificar si hay premios activos
+      const { data: prizes } = await supabase
+        .from('anniversary_prizes')
+        .select('id')
+        .eq('is_active', true)
+        .limit(1);
+
+      console.log('🎰 Premios activos:', prizes?.length || 0);
+
+      if (!prizes || prizes.length === 0) {
+        console.log('❌ No hay premios activos');
+        return;
+      }
+
+      // Verificar si ya jugó antes
+      const { data: winner } = await supabase
+        .from('anniversary_winners')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      console.log('🎰 Ya jugó antes:', !!winner);
+
+      if (!winner) {
+        console.log('✅ Usuario ELEGIBLE para ruleta - shouldShowWheel = true');
+        setShouldShowWheel(true);
+        
+        // Si no hay modal de puntos activo, mostrar la ruleta directamente después de 1 segundo
+        setTimeout(() => {
+          console.log('🎡 Abriendo ruleta automáticamente para usuario elegible');
+          setShowWheelModal(true);
+        }, 1500);
+      } else {
+        console.log('❌ Usuario ya participó');
+      }
+    };
+
+    checkWheelEligibility();
+  }, [user?.id]);
+
+  // Función para cerrar el modal de puntos y abrir la ruleta si corresponde
+  const handleClosePointsModal = useCallback(() => {
+    console.log('🔔 handleClosePointsModal ejecutado');
+    console.log('🔔 shouldShowWheel:', shouldShowWheel);
+    
+    closeModal();
+    
+    if (shouldShowWheel) {
+      console.log('✅ Abriendo ruleta en 500ms...');
+      setTimeout(() => {
+        console.log('🎡 EJECUTANDO setShowWheelModal(true)');
+        setShowWheelModal(true);
+        setShouldShowWheel(false);
+      }, 500);
+    } else {
+      console.log('❌ shouldShowWheel es false - NO se abrirá la ruleta');
+    }
+  }, [closeModal, shouldShowWheel]);
+
+  // Verificar puntos de bienvenida al cargar
+  useEffect(() => {
+    if (user?.id) {
+      checkWelcomePoints();
+    }
+  }, [user?.id, checkWelcomePoints]);
 
   // Efecto para restaurar el estado del modal al cargar la página
   useEffect(() => {
@@ -1627,11 +1705,19 @@ const UserDashboard = ({ user, onLogout }) => {
       {/* Modal de notificación de puntos */}
       <AchievementUnlockedModal 
         isOpen={showModal}
-        onClose={closeModal}
+        onClose={handleClosePointsModal}
         type={modalConfig.type}
         points={modalConfig.points}
         customTitle={modalConfig.customTitle}
         customDescription={modalConfig.customDescription}
+      />
+
+      {/* Modal de Ruleta de Bienvenida */}
+      <WelcomeWheelModal 
+        isOpen={showWheelModal}
+        onClose={() => setShowWheelModal(false)}
+        userId={user?.id}
+        userName={user?.name}
       />
 
     </div>

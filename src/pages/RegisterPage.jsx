@@ -208,6 +208,8 @@ import { assignWelcomePoints } from '@/lib/utils';    const StepIndicator = ({ c
         }
         
         setLoading(false);
+        
+        // Navegar al dashboard - la ruleta se mostrará allí automáticamente
         navigate('/dashboard', { 
           state: { 
             isNewUser: true, 
