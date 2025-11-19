@@ -61,6 +61,7 @@ const AddHistoryPage = () => {
     const [professionals, setProfessionals] = useState([]);
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [draftRestored, setDraftRestored] = useState(false); // Flag para controlar si ya se restauró el borrador
     
     // State for grooming images
     const [beforeImages, setBeforeImages] = useState([]);
@@ -70,6 +71,22 @@ const AddHistoryPage = () => {
 
     const detailsConfig = recordTypeDetails[recordType] || { title: 'Nuevo Registro', icon: Info };
     const isEditing = Boolean(historyId);
+    
+    // Clave única para localStorage basada en petId, recordType e historyId
+    const draftKey = `history_draft_${petId}_${recordType}_${historyId || 'new'}`;
+
+    // Guardar borrador en localStorage cada vez que cambie formData (solo después de restaurar)
+    useEffect(() => {
+        if (!isEditing && draftRestored) { // Solo guardar después de que se haya restaurado el borrador
+            const draftData = {
+                formData,
+                beforePreviews,
+                afterPreviews,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem(draftKey, JSON.stringify(draftData));
+        }
+    }, [formData, beforePreviews, afterPreviews, draftKey, isEditing, draftRestored]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -109,13 +126,65 @@ const AddHistoryPage = () => {
                     }
                 }
                 setLoading(false);
+            } else {
+                // Intentar cargar borrador guardado para registros nuevos
+                const savedDraft = localStorage.getItem(draftKey);
+                if (savedDraft) {
+                    try {
+                        const draftData = JSON.parse(savedDraft);
+                        const draftAge = new Date() - new Date(draftData.timestamp);
+                        // Solo restaurar si el borrador tiene menos de 24 horas
+                        if (draftAge < 24 * 60 * 60 * 1000) {
+                            setFormData(draftData.formData);
+                            setBeforePreviews(draftData.beforePreviews || []);
+                            setAfterPreviews(draftData.afterPreviews || []);
+                            toast({ 
+                                title: "Borrador restaurado", 
+                                description: "Se ha recuperado tu borrador anterior.",
+                                duration: 3000
+                            });
+                        } else {
+                            // Eliminar borradores antiguos
+                            localStorage.removeItem(draftKey);
+                        }
+                    } catch (error) {
+                        console.error('Error al restaurar borrador:', error);
+                        localStorage.removeItem(draftKey);
+                    }
+                }
+                // Activar el flag después de intentar restaurar (haya o no borrador)
+                setDraftRestored(true);
             }
         };
         fetchData();
-    }, [recordType, historyId, isEditing, petId, navigate]);
+    }, [recordType, historyId, isEditing, petId, navigate, draftKey]);
     
     const handleDetailChange = (field, value) => setFormData(prev => ({ ...prev, details: { ...prev.details, [field]: value } }));
     const handleFormChange = (field, value) => setFormData(prev => ({...prev, [field]: value}));
+    
+    const handleCancel = () => {
+        // Limpiar borrador al cancelar
+        if (!isEditing) {
+            localStorage.removeItem(draftKey);
+        }
+        navigate(`/admin/pets/${petId}`);
+    };
+    
+    const handleClearDraft = () => {
+        if (window.confirm('¿Estás seguro de que quieres eliminar el borrador y empezar de nuevo?')) {
+            localStorage.removeItem(draftKey);
+            setFormData({ record_date: new Date().toISOString().slice(0, 16), details: {} });
+            setBeforePreviews([]);
+            setAfterPreviews([]);
+            setBeforeImages([]);
+            setAfterImages([]);
+            setDraftRestored(true); // Mantener el flag activo para que siga guardando
+            toast({ 
+                title: "Borrador eliminado", 
+                description: "El formulario se ha limpiado correctamente." 
+            });
+        }
+    };
 
     const uploadImages = async (imageList, category) => {
         const imageUrls = [];
@@ -148,6 +217,10 @@ const AddHistoryPage = () => {
             const payload = { pet_id: petId, record_type: recordType, record_date: formData.record_date, details: detailsToSave, professional_id: formData.professional_id };
             const { error } = isEditing ? await supabase.from('pet_history').update(payload).eq('id', historyId) : await supabase.from('pet_history').insert(payload);
             if (error) throw error;
+            
+            // Limpiar borrador después de guardar exitosamente
+            localStorage.removeItem(draftKey);
+            
             toast({ title: "Éxito", description: `Registro ${isEditing ? 'actualizado' : 'guardado'} correctamente.` });
             navigate(`/admin/pets/${petId}`);
         } catch (error) { toast({ title: "Error al guardar", description: error.message, variant: "destructive" }); } 
@@ -180,15 +253,27 @@ const AddHistoryPage = () => {
 
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl shadow-lg p-6 max-w-3xl mx-auto">
-             <div className="flex items-center gap-2 mb-6">
-                <detailsConfig.icon className="w-6 h-6 text-[#0378A6]" />
-                <h1 className="text-xl font-bold text-gray-800">{isEditing ? 'Editar' : 'Añadir'} {detailsConfig.title}</h1>
+             <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                    <detailsConfig.icon className="w-6 h-6 text-[#0378A6]" />
+                    <h1 className="text-xl font-bold text-gray-800">{isEditing ? 'Editar' : 'Añadir'} {detailsConfig.title}</h1>
+                </div>
+                {!isEditing && (
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleClearDraft}
+                        className="text-gray-600 hover:text-red-600"
+                    >
+                        Limpiar Borrador
+                    </Button>
+                )}
             </div>
             <div className="space-y-6">
                 {loading ? <div className="flex justify-center items-center h-40"><div className="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-[#0378A6]"></div></div> : renderFields()}
             </div>
             <div className="mt-8 flex justify-end gap-2">
-                <Button variant="ghost" onClick={() => navigate(`/admin/pets/${petId}`)} disabled={loading}>Cancelar</Button>
+                <Button variant="ghost" onClick={handleCancel} disabled={loading}>Cancelar</Button>
                 <Button onClick={handleSave} disabled={loading}>{loading ? "Guardando..." : "Guardar Registro"}</Button>
             </div>
         </motion.div>

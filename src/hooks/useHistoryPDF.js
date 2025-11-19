@@ -84,13 +84,13 @@ export const useHistoryPDF = () => {
             doc.setLineWidth(1);
             doc.line(15, yPos, 195, yPos);
             
-            // Información de la mascota (en recuadro)
+            // Información de la mascota con datos del propietario (en recuadro expandido)
             yPos += 15;
             doc.setFillColor(248, 250, 252);
-            doc.rect(15, yPos - 5, 180, 45, 'F');
+            doc.rect(15, yPos - 5, 180, 60, 'F');
             doc.setDrawColor(...grayColor);
             doc.setLineWidth(0.5);
-            doc.rect(15, yPos - 5, 180, 45);
+            doc.rect(15, yPos - 5, 180, 60);
             
             doc.setTextColor(...primaryColor);
             doc.setFontSize(14);
@@ -100,34 +100,21 @@ export const useHistoryPDF = () => {
             doc.setTextColor(...darkGray);
             doc.setFontSize(11);
             doc.setFont(undefined, 'normal');
+            // Columna izquierda
             doc.text(`Nombre: ${pet.name}`, 20, yPos + 15);
             doc.text(`Especie: ${pet.species || 'No especificada'}`, 20, yPos + 22);
             doc.text(`Raza: ${pet.breed?.name || 'No especificada'}`, 20, yPos + 29);
+            doc.text(`Propietario: ${pet.owner.name}`, 20, yPos + 36);
+            if (pet.owner.phone) doc.text(`Teléfono: ${pet.owner.phone}`, 20, yPos + 43);
+            
+            // Columna derecha
             doc.text(`Edad: ${pet.age ? `${pet.age} años` : 'No especificada'}`, 110, yPos + 15);
             doc.text(`Peso: ${pet.weight ? `${pet.weight} kg` : 'No especificado'}`, 110, yPos + 22);
             doc.text(`Color: ${pet.color || 'No especificado'}`, 110, yPos + 29);
-            
-            // Información del propietario
-            yPos += 55;
-            doc.setFillColor(254, 249, 195);
-            doc.rect(15, yPos - 5, 180, 30, 'F');
-            doc.setDrawColor(...grayColor);
-            doc.rect(15, yPos - 5, 180, 30);
-            
-            doc.setTextColor(...secondaryColor);
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text("PROPIETARIO", 20, yPos + 5);
-            
-            doc.setTextColor(...darkGray);
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Nombre: ${pet.owner.name}`, 20, yPos + 15);
-            if (pet.owner.phone) doc.text(`Teléfono: ${pet.owner.phone}`, 110, yPos + 15);
-            if (pet.owner.email) doc.text(`Email: ${pet.owner.email}`, 20, yPos + 22);
+            if (pet.owner.email) doc.text(`Email: ${pet.owner.email}`, 110, yPos + 36);
             
             // Detalles del procedimiento
-            yPos += 45;
+            yPos += 70; // Ajustado para la nueva sección combinada
             doc.setTextColor(...primaryColor);
             doc.setFontSize(14);
             doc.setFont(undefined, 'bold');
@@ -144,8 +131,105 @@ export const useHistoryPDF = () => {
             
             const details = record.details;
             
+            // Función para agregar el header en páginas nuevas
+            const addPageHeader = () => {
+                // Header con logo y branding
+                doc.setFillColor(...primaryColor);
+                doc.rect(0, 0, 210, 40, 'F');
+                
+                // Agregar logo si está disponible
+                if (companyLogo) {
+                    try {
+                        doc.addImage(companyLogo, 'PNG', 15, 8, 25, 25);
+                    } catch (logoError) {
+                        console.log('Error agregando logo al PDF:', logoError);
+                    }
+                }
+                
+                // Título principal
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(20);
+                doc.setFont(undefined, 'bold');
+                doc.text(companyName, companyLogo ? 50 : 105, 20, { align: companyLogo ? 'left' : 'center' });
+                doc.setFontSize(10);
+                doc.text("Continuación - Registro de Atención Médica", companyLogo ? 50 : 105, 30, { align: companyLogo ? 'left' : 'center' });
+                
+                // Restablecer color de texto
+                doc.setTextColor(...darkGray);
+                doc.setFont(undefined, 'normal');
+                
+                return 50; // Retornar posición Y inicial para contenido
+            };
+            
+            // Función para agregar footer en cada página
+            const addPageFooter = () => {
+                const pageHeight = doc.internal.pageSize.height;
+                const footerHeight = 35;
+                const footerY = pageHeight - footerHeight;
+                
+                // Franja de fondo para el footer
+                doc.setFillColor(239, 246, 255);
+                doc.rect(0, footerY, 210, footerHeight, 'F');
+                
+                // Línea superior del footer
+                doc.setDrawColor(...primaryColor);
+                doc.setLineWidth(1);
+                doc.line(0, footerY, 210, footerY);
+                
+                // Título de información de contacto
+                doc.setTextColor(...primaryColor);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text("INFORMACIÓN DE CONTACTO", 15, footerY + 10);
+                
+                // Información de contacto en el footer
+                doc.setTextColor(...darkGray);
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'normal');
+                
+                // Primera línea de contacto
+                doc.text(`Dirección: ${companyAddress}`, 15, footerY + 18);
+                doc.text(`Teléfono: ${companyPhone}`, 110, footerY + 18);
+                
+                // Segunda línea de contacto
+                doc.text("Sitio web: www.4huellitas.com", 15, footerY + 25);
+                doc.text("Email: contacto@4huellitas.com", 110, footerY + 25);
+                
+                // Información del documento en la parte inferior
+                doc.setTextColor(...grayColor);
+                doc.setFontSize(7);
+                doc.text("Documento generado automáticamente", 15, footerY + 32);
+                doc.text(`Fecha: ${format(new Date(), "d/MM/yyyy HH:mm", { locale: es })}`, 105, footerY + 32, { align: 'center' });
+                doc.text(`ID: ${record.id?.substring(0, 8) || 'N/A'}`, 195, footerY + 32, { align: 'right' });
+                
+                // Restablecer color de texto
+                doc.setTextColor(...darkGray);
+                doc.setFont(undefined, 'normal');
+            };
+            
             const addDetailField = (label, value, isBold = false) => {
                 if (value && value.toString().trim()) {
+                    // Verificar si necesitamos una nueva página (dejando espacio para el footer)
+                    if (yPos > 240) {
+                        addPageFooter(); // Agregar footer a página actual
+                        doc.addPage();
+                        yPos = addPageHeader(); // Agregar header y obtener posición inicial
+                        yPos += 15; // Espacio después del header
+                        
+                        // Re-agregar título de sección en la nueva página
+                        doc.setTextColor(...primaryColor);
+                        doc.setFontSize(14);
+                        doc.setFont(undefined, 'bold');
+                        doc.text("DETALLES DEL PROCEDIMIENTO (Continuación)", 15, yPos);
+                        yPos += 5;
+                        doc.setDrawColor(...primaryColor);
+                        doc.line(15, yPos, 195, yPos);
+                        yPos += 15;
+                        doc.setTextColor(...darkGray);
+                        doc.setFontSize(11);
+                        doc.setFont(undefined, 'normal');
+                    }
+                    
                     // Escribir la etiqueta en negrita
                     doc.setFont(undefined, 'bold');
                     doc.text(`${label}:`, 15, yPos);
@@ -170,8 +254,29 @@ export const useHistoryPDF = () => {
                             yPos += 8;
                         } else {
                             yPos += 6;
+                            
+                            // Verificar si el texto dividido cabe en la página actual
+                            const textHeight = splitText.length * 5;
+                            if (yPos + textHeight > 240) {
+                                addPageFooter();
+                                doc.addPage();
+                                yPos = addPageHeader();
+                                yPos += 15;
+                                doc.setTextColor(...primaryColor);
+                                doc.setFontSize(14);
+                                doc.setFont(undefined, 'bold');
+                                doc.text("DETALLES DEL PROCEDIMIENTO (Continuación)", 15, yPos);
+                                yPos += 5;
+                                doc.setDrawColor(...primaryColor);
+                                doc.line(15, yPos, 195, yPos);
+                                yPos += 15;
+                                doc.setTextColor(...darkGray);
+                                doc.setFontSize(11);
+                                doc.setFont(undefined, 'normal');
+                            }
+                            
                             doc.text(splitText, 20, yPos);
-                            yPos += (splitText.length * 5) + 3;
+                            yPos += textHeight + 3;
                         }
                     }
                 }
@@ -201,6 +306,14 @@ export const useHistoryPDF = () => {
                     const addImagesToPdf = async (images, title) => {
                         if (images.length === 0) return;
                         
+                        // Verificar si necesitamos una nueva página antes de agregar el título
+                        if (yPos > 230) {
+                            addPageFooter();
+                            doc.addPage();
+                            yPos = addPageHeader();
+                            yPos += 15;
+                        }
+                        
                         yPos += 10;
                         doc.setFont(undefined, 'bold');
                         doc.setTextColor(...primaryColor);
@@ -214,10 +327,20 @@ export const useHistoryPDF = () => {
                         
                         for (let i = 0; i < Math.min(images.length, 6); i++) { // Máximo 6 imágenes
                             try {
-                                // Verificar si necesitamos una nueva página
-                                if (yPos + imageHeight > 270) {
+                                // Verificar si necesitamos una nueva página (dejando espacio para footer)
+                                if (yPos + imageHeight > 240) {
+                                    addPageFooter();
                                     doc.addPage();
-                                    yPos = 20;
+                                    yPos = addPageHeader();
+                                    yPos += 15;
+                                    
+                                    // Re-agregar título de sección en la nueva página
+                                    doc.setFont(undefined, 'bold');
+                                    doc.setTextColor(...primaryColor);
+                                    doc.text(`${title} (Continuación)`, 15, yPos);
+                                    yPos += 10;
+                                    doc.setTextColor(...darkGray);
+                                    doc.setFont(undefined, 'normal');
                                 }
                                 
                                 const xPos = 15 + (imageCount % maxImagesPerRow) * (imageWidth + 10);
@@ -346,47 +469,8 @@ export const useHistoryPDF = () => {
                     yPos += 10;
             }
             
-            // Calcular posición del footer
-            const pageHeight = doc.internal.pageSize.height;
-            const footerHeight = 35;
-            const footerY = pageHeight - footerHeight;
-            
-            // Footer con franja de información de contacto
-            
-            // Franja de fondo para el footer
-            doc.setFillColor(239, 246, 255);
-            doc.rect(0, footerY, 210, footerHeight, 'F');
-            
-            // Línea superior del footer
-            doc.setDrawColor(...primaryColor);
-            doc.setLineWidth(1);
-            doc.line(0, footerY, 210, footerY);
-            
-            // Título de información de contacto
-            doc.setTextColor(...primaryColor);
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'bold');
-            doc.text("INFORMACION DE CONTACTO", 15, footerY + 10);
-            
-            // Información de contacto en el footer
-            doc.setTextColor(...darkGray);
-            doc.setFontSize(8);
-            doc.setFont(undefined, 'normal');
-            
-            // Primera línea de contacto
-            doc.text(`Direccion: ${companyAddress}`, 15, footerY + 18);
-            doc.text(`Telefono: ${companyPhone}`, 110, footerY + 18);
-            
-            // Segunda línea de contacto
-            doc.text("Sitio web: www.4huellitas.com", 15, footerY + 25);
-            doc.text("Email: contacto@4huellitas.com", 110, footerY + 25);
-            
-            // Información del documento en la parte inferior
-            doc.setTextColor(...grayColor);
-            doc.setFontSize(7);
-            doc.text("Documento generado automáticamente", 15, footerY + 32);
-            doc.text(`Fecha: ${format(new Date(), "d/MM/yyyy HH:mm", { locale: es })}`, 105, footerY + 32, { align: 'center' });
-            doc.text(`ID: ${record.id?.substring(0, 8) || 'N/A'}`, 195, footerY + 32, { align: 'right' });
+            // Agregar footer en la última página
+            addPageFooter();
             
             // Guardar el archivo con tipo traducido al español
             const recordTypeTranslations = {
