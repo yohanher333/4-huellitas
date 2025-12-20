@@ -1064,6 +1064,19 @@ const UserDashboard = ({ user, onLogout }) => {
 
       console.log('🎰 Verificando elegibilidad para ruleta...');
 
+      // Primero verificar si el sistema de aniversario está habilitado por el admin
+      const { data: config } = await supabase
+        .from('anniversary_config')
+        .select('enabled')
+        .single();
+
+      console.log('🎰 Configuración de aniversario:', config);
+
+      if (!config || !config.enabled) {
+        console.log('❌ Sistema de aniversario deshabilitado por el administrador');
+        return;
+      }
+
       // Verificar si hay premios activos
       const { data: prizes } = await supabase
         .from('anniversary_prizes')

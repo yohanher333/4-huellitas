@@ -162,7 +162,7 @@ const AppointmentsCalendar = () => {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-7 text-center font-semibold text-gray-500 text-sm border-b">
-                        {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'].map(day => <div key={day} className="py-2">{day}</div>)}
+                        {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(day => <div key={day} className="py-2">{day}</div>)}
                     </div>
                     <div className="grid grid-cols-7">
                         {calendarDays.map(day => {
