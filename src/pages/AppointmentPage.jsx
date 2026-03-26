@@ -392,10 +392,11 @@ const AppointmentPage = ({ user }) => {
           return aptTime >= slotStart && aptTime < slotEnd;
         }) || [];
 
-        // Check if slot is available (not in the past and has capacity)
+        // Check if slot is available (at least 6 hours in the future and has capacity)
         const slotDateTime = new Date(`${formattedDate}T${slot.start_time}`);
+        const minimumBookingTime = addHours(now, 6); // Mínimo 6 horas de anticipación
         const canBook = (
-          slotDateTime > now && 
+          slotDateTime >= minimumBookingTime && 
           conflictingAppointments.length < availableProfessionalsCount
         );
 
@@ -490,11 +491,12 @@ const AppointmentPage = ({ user }) => {
         const canBook = conflictingAppointments.length < maxConcurrentAppointments;
         
         if (canBook) {
-          // Check if slot is not in the past
+          // Check if slot is at least 6 hours in the future
           const slotDateTime = new Date(date);
           slotDateTime.setHours(currentTime.getHours(), currentTime.getMinutes());
+          const minimumBookingTime = addHours(new Date(), 6); // Mínimo 6 horas de anticipación
           
-          if (slotDateTime > new Date()) {
+          if (slotDateTime >= minimumBookingTime) {
             // Check if this slot is already added (to avoid duplicates from multiple schedules)
             const existingSlot = availableSlots.find(s => s.start_time === slotTime);
             if (!existingSlot) {
@@ -1220,7 +1222,7 @@ Servicio: ${appointmentDetails.service?.name || 'N/A'}`;
             <div className="text-center mb-6">
               <img 
                 alt={appointmentDetails?.pet?.name || 'Foto de mascota'} 
-                src={appointmentDetails?.pet?.photo_url || 'https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/5b1a62d4e78298715d311910a3013c72.png'} 
+                src={appointmentDetails?.pet?.photo_url || '/pet-placeholder.svg'} 
                 className="w-24 h-24 object-cover rounded-full mx-auto border-4 border-gradient-to-r from-[#0378A6] to-[#F26513] shadow-lg"
               />
               <h2 className="font-bold text-2xl mt-4 bg-gradient-to-r from-[#0378A6] to-[#F26513] bg-clip-text text-transparent">

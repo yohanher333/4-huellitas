@@ -3,16 +3,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { LogOut, User, Calendar, Search } from 'lucide-react';
+import { useCompany } from '@/contexts/CompanyContext';
 
 const Header = ({ user, onLogout }) => {
   const navigate = useNavigate();
+  const { logo } = useCompany();
 
   return (
     <header className="hidden md:block bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-6 py-3 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2">
           <img
-            src="https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/e00c42547df182c8547e11b986abb6b3.png"
+            src={logo}
             alt="4huellitas Logo"
             className="h-16 w-16 object-contain"
           />

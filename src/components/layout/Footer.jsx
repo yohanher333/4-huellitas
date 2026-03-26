@@ -1,7 +1,9 @@
 import React from 'react';
 import { Facebook, Instagram } from 'lucide-react';
+import { useCompany } from '@/contexts/CompanyContext';
 
 const Footer = () => {
+  const { logo } = useCompany();
   return (
     <footer className="hidden md:block bg-[#0D0D0D] text-white">
       <div className="container mx-auto px-6 py-12">
@@ -9,7 +11,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <img
-                src="https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/e00c42547df182c8547e11b986abb6b3.png"
+                src={logo}
                 alt="4huellitas Logo"
                 className="h-10 w-10 object-contain"
               />

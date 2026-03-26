@@ -350,7 +350,7 @@ const PetHistoryPage = () => {
                                     <div className="relative group">
                                         <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-white/20 backdrop-blur-sm p-2">
                                             <img 
-                                                src={pet.photo_url || 'https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/5b1a62d4e78298715d311910a3013c72.png'} 
+                                                src={pet.photo_url || '/pet-placeholder.svg'} 
                                                 alt={pet.name} 
                                                 className="w-full h-full rounded-full object-cover border-4 border-white/50 group-hover:scale-105 transition-transform duration-300"
                                             />

@@ -315,15 +315,15 @@ const PetProfile = () => {
   if (!pet) return null;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="-m-4 md:-m-6 p-4 md:p-6">
       <Button onClick={() => navigate('/admin/pets')} variant="ghost" className="mb-4">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Volver a Mascotas
       </Button>
-      <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-[#0378A6]/10 p-6 md:p-8 mb-6 border border-[#0378A6]/10">
          <div className="flex flex-col md:flex-row items-start gap-6 mb-8">
           <div className="relative w-24 h-24 shrink-0">
-            <img src={imagePreview || 'https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/5b1a62d4e78298715d311910a3013c72.png'} alt={pet.name} className="w-24 h-24 object-cover rounded-full bg-gray-200" />
+            <img src={imagePreview || '/pet-placeholder.svg'} alt={pet.name} className="w-24 h-24 object-cover rounded-full bg-gray-200" />
             {isEditing && (<Button size="icon" className="absolute bottom-0 right-0 h-8 w-8 rounded-full" onClick={() => photoInputRef.current.click()}><Upload className="h-4 w-4" /></Button>)}
             <input type="file" ref={photoInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
           </div>

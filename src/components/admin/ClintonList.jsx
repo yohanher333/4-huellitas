@@ -52,19 +52,19 @@ const ClintonList = () => {
   if (loading) return <div className="flex justify-center items-center p-8"><div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-red-500"></div></div>;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-lg p-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-[#0378A6]/10 p-6 border border-[#0378A6]/10">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><UserX className="text-red-500"/> Lista Negra</h2>
       </div>
       {clintonListUsers.length > 0 ? (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-gray-200">
           <table className="w-full text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="p-3">Nombre</th>
-                <th className="p-3 hidden md:table-cell">Teléfono</th>
-                <th className="p-3 hidden lg:table-cell">Email</th>
-                <th className="p-3">Acciones</th>
+            <thead className="bg-gradient-to-r from-[#0378A6] to-[#025d80]">
+              <tr>
+                <th className="p-3 text-white font-semibold">Nombre</th>
+                <th className="p-3 text-white font-semibold hidden md:table-cell">Teléfono</th>
+                <th className="p-3 text-white font-semibold hidden lg:table-cell">Email</th>
+                <th className="p-3 text-white font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody>

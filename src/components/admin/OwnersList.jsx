@@ -262,9 +262,9 @@ const OwnersList = () => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-lg p-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-[#0378A6]/10 p-6 border border-[#0378A6]/10">
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:justify-between sm:items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Propietarios</h2>
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0378A6] to-[#025d80] bg-clip-text text-transparent">Propietarios</h2>
         <div className="flex gap-2 items-center">
           <Input
             placeholder="Filtrar por nombre o email..."
@@ -282,13 +282,13 @@ const OwnersList = () => {
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
-          <thead>
-            <tr className="border-b">
-              <th className="p-3"><input type="checkbox" checked={selectedOwners.length === filteredOwners.length && filteredOwners.length > 0} onChange={e => setSelectedOwners(e.target.checked ? filteredOwners.map(o => o.id) : [])} /></th>
-              <th className="p-3">Nombre</th>
-              <th className="p-3 hidden md:table-cell">Email</th>
-              <th className="p-3 hidden lg:table-cell">Teléfono</th>
-              <th className="p-3">Acciones</th>
+          <thead className="bg-gradient-to-r from-[#0378A6] to-[#025d80]">
+            <tr>
+              <th className="p-4"><input type="checkbox" checked={selectedOwners.length === filteredOwners.length && filteredOwners.length > 0} onChange={e => setSelectedOwners(e.target.checked ? filteredOwners.map(o => o.id) : [])} className="rounded" /></th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Nombre</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider hidden md:table-cell">Email</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider hidden lg:table-cell">Teléfono</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
           <tbody>

@@ -92,9 +92,9 @@ const ScheduleSettings = () => {
     if (loading) return <div className="flex justify-center items-center h-full"><div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-[#0378A6]"></div></div>;
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 -m-4 md:-m-6 p-4 md:p-6">
             {/* Aviso sobre el nuevo sistema */}
-            <Card className="shadow-lg border-l-4 border-l-blue-500">
+            <Card className="shadow-lg shadow-[#0378A6]/10 border-l-4 border-l-[#0378A6] bg-white/95 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-blue-700">
                         <Clock className="w-6 h-6" />
@@ -124,9 +124,9 @@ const ScheduleSettings = () => {
                 </CardContent>
             </Card>
 
-            <Card className="shadow-lg">
+            <Card className="shadow-lg shadow-[#0378A6]/10 bg-white/95 backdrop-blur-sm border border-[#0378A6]/10">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Clock className="w-6 h-6 text-[#0378A6]" /> Horarios de Trabajo Tradicionales</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Clock className="w-6 h-6 text-[#0378A6]" /> <span className="bg-gradient-to-r from-[#0378A6] to-[#025d80] bg-clip-text text-transparent">Horarios de Trabajo Tradicionales</span></CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-gray-600 mb-6">

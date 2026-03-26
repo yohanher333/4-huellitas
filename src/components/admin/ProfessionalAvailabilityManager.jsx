@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-import { Users } from 'lucide-react';
+import { Users, FileText } from 'lucide-react';
 
 const ProfessionalAvailabilityManager = () => {
   const [workSchedules, setWorkSchedules] = useState([]);
@@ -138,7 +138,7 @@ const ProfessionalAvailabilityManager = () => {
           <div className="grid gap-4">
             {/* Info message */}
             <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
-              <h3 className="font-semibold mb-2 text-blue-800">📝 Nota Importante</h3>
+              <h3 className="font-semibold mb-2 text-blue-800 flex items-center gap-2"><FileText className="w-4 h-4" /> Nota Importante</h3>
               <p className="text-sm text-blue-700">
                 Los profesionales se gestionan desde <strong>Configuración → Gestión de Profesionales</strong>. 
                 Aquí solo puedes configurar su disponibilidad por horario.

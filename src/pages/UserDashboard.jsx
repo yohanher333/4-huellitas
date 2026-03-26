@@ -7,8 +7,9 @@ import {
   User, Dog, Heart, Calendar as CalendarIcon, Award, LogOut, Edit, Trash2, Camera, ShieldCheck, Home, Plus, Cat, Clock, PawPrint, History, X, Trophy, ChevronDown, ChevronUp, Info, Cake, Stethoscope, Shield, Palette, AlertTriangle
 } from 'lucide-react';
 import { useNavigate, useLocation, NavLink, Routes, Route, Navigate } from 'react-router-dom';
-import { format, isFuture, isPast, differenceInHours, addMinutes, parse } from 'date-fns';
+import { format, isFuture, isPast, differenceInHours, addMinutes, addHours, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useCompany } from '@/contexts/CompanyContext';
 
 // Components
 import { Input } from '@/components/ui/input';
@@ -145,10 +146,11 @@ const RescheduleDialog = ({ isOpen, onOpenChange, appointment, onConfirm }) => {
                 return aptTime >= slotStart && aptTime < slotEnd;
             }) || [];
 
-            // Check if slot is available (not in the past and has capacity)
+            // Check if slot is available (at least 6 hours in the future and has capacity)
             const slotDateTime = new Date(`${formattedDate}T${slot.start_time}`);
+            const minimumBookingTime = addHours(now, 6); // Mínimo 6 horas de anticipación
             const canBook = (
-                slotDateTime > now && 
+                slotDateTime >= minimumBookingTime && 
                 conflictingAppointments.length < availableProfessionalsCount
             );
 
@@ -246,7 +248,7 @@ const PetCard = ({ pet, onEdit, onDelete }) => {
           <img 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
             alt={pet.name || 'Foto de mascota'} 
-            src={pet.photo_url || 'https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/5b1a62d4e78298715d311910a3013c72.png'} 
+            src={pet.photo_url || '/pet-placeholder.svg'} 
           />
           {/* Overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
@@ -787,7 +789,7 @@ const PetFormDialog = ({ isOpen, setIsOpen, user, fetchPets, editingPet }) => {
                     <div className="flex flex-col items-center gap-4 p-6 bg-gradient-to-r from-blue-50/50 to-orange-50/50 rounded-xl border border-blue-100/30">
                         <div className="relative">
                             <img 
-                                src={photoPreview || 'https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/5b1a62d4e78298715d311910a3013c72.png'} 
+                                src={photoPreview || '/pet-placeholder.svg'} 
                                 alt="preview" 
                                 className="w-32 h-32 rounded-full object-cover bg-gray-200 border-4 border-white shadow-lg"
                             />
@@ -1028,6 +1030,7 @@ const PageWrapper = ({ children, title }) => <motion.div initial={{ opacity: 0 }
 
 // Main Dashboard Component
 const UserDashboard = ({ user, onLogout }) => {
+  const { logo } = useCompany();
   const [pets, setPets] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1660,7 +1663,7 @@ const UserDashboard = ({ user, onLogout }) => {
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md p-4 flex justify-between items-center border-b border-white/20 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-r from-[#0378A6] to-[#F26513] rounded-full p-0.5">
-            <img src="https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/e00c42547df182c8547e11b986abb6b3.png" alt="Logo" className="h-full w-full rounded-full bg-white p-1"/>
+            <img src={logo} alt="Logo" className="h-full w-full rounded-full bg-white p-1"/>
           </div>
           <h1 className="text-xl font-bold bg-gradient-to-r from-[#0378A6] to-[#F26513] bg-clip-text text-transparent">
             ¡Hola, {user?.name?.split(' ')[0]}!

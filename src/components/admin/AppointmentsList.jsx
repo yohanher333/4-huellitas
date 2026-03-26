@@ -183,21 +183,33 @@ const AppointmentsList = () => {
     if (error) {
       toast({ title: "Error", description: "No se pudieron cargar las citas.", variant: "destructive" });
     } else {
-      // Obtener información de profesionales para las citas que tienen profesional asignado
-      const appointmentsWithProfs = await Promise.all(data.map(async (appointment) => {
-        if (appointment.assigned_professional_id) {
-          const { data: professionalData } = await supabase
-            .from('professionals')
-            .select('id, name')
-            .eq('id', appointment.assigned_professional_id)
-            .single();
-          
-          return {
-            ...appointment,
-            professional: professionalData
-          };
+      // Obtener IDs únicos de profesionales asignados
+      const professionalIds = [...new Set(
+        data.filter(app => app.assigned_professional_id).map(app => app.assigned_professional_id)
+      )];
+      
+      // Una sola consulta para todos los profesionales
+      let professionalsMap = {};
+      if (professionalIds.length > 0) {
+        const { data: professionalsData } = await supabase
+          .from('professionals')
+          .select('id, name')
+          .in('id', professionalIds);
+        
+        if (professionalsData) {
+          professionalsMap = professionalsData.reduce((acc, prof) => {
+            acc[prof.id] = prof;
+            return acc;
+          }, {});
         }
-        return appointment;
+      }
+      
+      // Mapear profesionales a las citas
+      const appointmentsWithProfs = data.map(appointment => ({
+        ...appointment,
+        professional: appointment.assigned_professional_id 
+          ? professionalsMap[appointment.assigned_professional_id] 
+          : null
       }));
       
       setAppointments(appointmentsWithProfs);
@@ -612,75 +624,185 @@ Gracias por tu comprensión 🐾`;
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'scheduled': return 'bg-blue-500';
-      case 'completed': return 'bg-green-500';
-      case 'cancelled': return 'bg-red-500';
-      case 'no_show': return 'bg-black text-white';
+      case 'scheduled': return 'bg-sky-100 text-sky-700 border border-sky-300';
+      case 'completed': return 'bg-emerald-100 text-emerald-700 border border-emerald-300';
+      case 'cancelled': return 'bg-rose-100 text-rose-700 border border-rose-300';
+      case 'no_show': return 'bg-slate-100 text-slate-700 border border-slate-300';
+      default: return 'bg-gray-100 text-gray-700 border border-gray-300';
+    }
+  };
+
+  const getStatusDot = (status) => {
+    switch (status) {
+      case 'scheduled': return 'bg-sky-500';
+      case 'completed': return 'bg-emerald-500';
+      case 'cancelled': return 'bg-rose-500';
+      case 'no_show': return 'bg-slate-500';
       default: return 'bg-gray-500';
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center p-8"><div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-[#0378A6]"></div></div>;
+  // Stats
+  const stats = {
+    total: appointments.length,
+    scheduled: appointments.filter(a => a.status === 'scheduled').length,
+    completed: appointments.filter(a => a.status === 'completed').length,
+    cancelled: appointments.filter(a => a.status === 'cancelled').length
+  };
+
+  if (loading) return (
+    <div className="-m-4 md:-m-6 min-h-screen bg-gradient-to-br from-[#0378A6]/5 via-[#0378A6]/10 to-[#F26513]/5 p-4 md:p-6 flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-[#0378A6]/20 rounded-full"></div>
+          <div className="absolute top-0 w-16 h-16 border-4 border-transparent border-t-[#0378A6] rounded-full animate-spin"></div>
+        </div>
+        <p className="text-gray-500 font-medium">Cargando citas...</p>
+      </div>
+    </div>
+  );
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-lg p-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-bold text-gray-800">Gestión de Citas</h2>
-            {(() => {
-              const pendingReminders = appointments.filter(app => needsReminder(app)).length;
-              return pendingReminders > 0 && (
-                <div className="flex items-center gap-2 bg-orange-50 text-orange-700 px-3 py-2 rounded-lg border border-orange-200">
-                  <Bell className="w-4 h-4" />
-                  <span className="text-sm font-medium">
-                    {pendingReminders} recordatorio{pendingReminders !== 1 ? 's' : ''} pendiente{pendingReminders !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              );
-            })()}
+    <div className="-m-4 md:-m-6 min-h-screen bg-gradient-to-br from-[#0378A6]/5 via-[#0378A6]/10 to-[#F26513]/5 p-4 md:p-6 space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white/90 backdrop-blur-xl rounded-2xl p-5 border border-[#0378A6]/20 shadow-lg shadow-[#0378A6]/5"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-[#0378A6] to-[#025d80] rounded-xl shadow-lg">
+            <Calendar className="w-7 h-7 text-white" />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowFilters(!showFilters)}
-                className="relative"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filtros
-                {getFilterCount() > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-[#F26513] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {getFilterCount()}
-                  </span>
-                )}
-              </Button>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#0378A6] to-[#025d80] bg-clip-text text-transparent">
+              Gestión de Citas
+            </h1>
+            <p className="text-gray-500 text-sm mt-0.5">
+              Administra y programa todas las citas
+            </p>
+          </div>
+          {(() => {
+            const pendingReminders = appointments.filter(app => needsReminder(app)).length;
+            return pendingReminders > 0 && (
+              <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-2 rounded-lg border border-amber-200 animate-pulse">
+                <Bell className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {pendingReminders} recordatorio{pendingReminders !== 1 ? 's' : ''} pendiente{pendingReminders !== 1 ? 's' : ''}
+                </span>
+              </div>
+            );
+          })()}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
             <Button 
               variant="outline" 
-              onClick={() => setShowBulkMessageModal(true)}
-              disabled={filteredAppointments.length === 0}
-              className="text-green-600 border-green-600 hover:bg-green-50"
+              onClick={() => setShowFilters(!showFilters)}
+              className="relative border-[#0378A6]/30 hover:bg-[#0378A6]/10"
             >
-              <Send className="w-4 h-4 mr-2" />
-              Mensaje Masivo ({filteredAppointments.length})
-            </Button>
-            {selectedAppointments.length > 0 && (
-              <Button 
-                variant="outline" 
-                onClick={() => setShowBulkDeleteConfirm(true)}
-                className="text-red-600 border-red-600 hover:bg-red-50"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Eliminar Seleccionadas ({selectedAppointments.length})
-              </Button>
-            )}
-            <Button onClick={() => handleOpenDialog()}>
-              <Plus className="w-4 h-4 mr-2" />
-              Añadir Cita
+              <Filter className="w-4 h-4 mr-2 text-[#0378A6]" />
+              Filtros
+              {getFilterCount() > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#F26513] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
+                  {getFilterCount()}
+                </span>
+              )}
             </Button>
           </div>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowBulkMessageModal(true)}
+            disabled={filteredAppointments.length === 0}
+            className="text-green-600 border-green-300 hover:bg-green-50"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            Mensaje Masivo ({filteredAppointments.length})
+          </Button>
+          {selectedAppointments.length > 0 && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              className="text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Eliminar ({selectedAppointments.length})
+            </Button>
+          )}
+          <Button 
+            onClick={() => handleOpenDialog()}
+            className="bg-[#0378A6] hover:bg-[#025d80] text-white shadow-md hover:shadow-lg transition-all"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nueva Cita
+          </Button>
         </div>
+      </motion.div>
+
+      {/* Stats Cards */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      >
+        <div className="bg-white/90 backdrop-blur-sm shadow-md rounded-xl p-4 border-l-4 border-l-[#0378A6] hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-br from-[#0378A6]/20 to-[#0378A6]/10 rounded-xl">
+              <Calendar className="w-5 h-5 text-[#0378A6]" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Total Citas</p>
+              <p className="text-2xl font-bold text-[#0378A6]">{stats.total}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/90 backdrop-blur-sm shadow-md rounded-xl p-4 border-l-4 border-l-sky-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-br from-sky-100 to-sky-50 rounded-xl">
+              <Clock className="w-5 h-5 text-sky-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Programadas</p>
+              <p className="text-2xl font-bold text-sky-600">{stats.scheduled}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/90 backdrop-blur-sm shadow-md rounded-xl p-4 border-l-4 border-l-emerald-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-xl">
+              <CheckSquare className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Completadas</p>
+              <p className="text-2xl font-bold text-emerald-600">{stats.completed}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/90 backdrop-blur-sm shadow-md rounded-xl p-4 border-l-4 border-l-rose-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-gradient-to-br from-rose-100 to-rose-50 rounded-xl">
+              <X className="w-5 h-5 text-rose-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Canceladas</p>
+              <p className="text-2xl font-bold text-rose-600">{stats.cancelled}</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main Content */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-[#0378A6]/10 overflow-hidden"
+      >
+      <div className="p-6 flex flex-col gap-4">
 
         {/* Panel de Filtros */}
         {showFilters && (
@@ -688,13 +810,16 @@ Gracias por tu comprensión 🐾`;
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-gray-50 rounded-xl p-4 space-y-4"
+            className="bg-gradient-to-r from-[#0378A6]/5 to-[#025d80]/5 rounded-xl p-5 space-y-4 border border-[#0378A6]/10"
           >
             <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-gray-700">Filtrar Citas</h3>
-              <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-[#0378A6]" />
+                <h3 className="font-semibold text-[#025d80]">Filtrar Citas</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="text-gray-500 hover:text-red-500">
                 <X className="w-4 h-4 mr-1" />
-                Limpiar
+                Limpiar filtros
               </Button>
             </div>
             
@@ -807,40 +932,42 @@ Gracias por tu comprensión 🐾`;
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
-          <thead>
-            <tr className="border-b">
-              <th className="p-3 w-12">
+          <thead className="bg-gradient-to-r from-[#0378A6] to-[#025d80]">
+            <tr>
+              <th className="p-4 w-12">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={selectAllAppointments}
-                  className="p-1 h-auto"
+                  className="p-1 h-auto hover:bg-white/20"
                 >
                   {selectedAppointments.length === filteredAppointments.length && filteredAppointments.length > 0 ? (
-                    <CheckSquare className="w-4 h-4 text-blue-600" />
+                    <CheckSquare className="w-4 h-4 text-white" />
                   ) : (
-                    <Square className="w-4 h-4 text-gray-400" />
+                    <Square className="w-4 h-4 text-white/70" />
                   )}
                 </Button>
               </th>
-              <th className="p-3">Fecha y Hora</th>
-              <th className="p-3 hidden md:table-cell">Cliente</th>
-              <th className="p-3 hidden lg:table-cell">Mascota</th>
-              <th className="p-3 hidden xl:table-cell">Profesional</th>
-              <th className="p-3">Estado</th>
-              <th className="p-3">Acciones</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Fecha y Hora</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider hidden md:table-cell">Cliente</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider hidden lg:table-cell">Mascota</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider hidden xl:table-cell">Profesional</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Estado</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-gray-100">
             {filteredAppointments.length === 0 ? (
               <tr>
-                <td colSpan="8" className="p-8 text-center text-gray-500">
-                  <div className="flex flex-col items-center gap-2">
-                    <Calendar className="w-12 h-12 text-gray-300" />
-                    <p className="font-medium">No se encontraron citas</p>
-                    <p className="text-sm">
+                <td colSpan="8" className="p-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 bg-[#0378A6]/10 rounded-full flex items-center justify-center">
+                      <Calendar className="w-8 h-8 text-[#0378A6]/40" />
+                    </div>
+                    <p className="font-semibold text-gray-700">No se encontraron citas</p>
+                    <p className="text-sm text-gray-500">
                       {appointments.length === 0 
-                        ? 'No hay citas registradas' 
+                        ? 'No hay citas registradas aún' 
                         : 'Intenta ajustar los filtros para ver más resultados'
                       }
                     </p>
@@ -848,9 +975,15 @@ Gracias por tu comprensión 🐾`;
                 </td>
               </tr>
             ) : (
-              filteredAppointments.map(app => (
-                <tr key={app.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">
+              filteredAppointments.map((app, index) => (
+                <motion.tr 
+                  key={app.id} 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className="hover:bg-[#0378A6]/5 transition-colors duration-200 group"
+                >
+                  <td className="p-4">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -858,78 +991,104 @@ Gracias por tu comprensión 🐾`;
                       className="p-1 h-auto"
                     >
                       {selectedAppointments.includes(app.id) ? (
-                        <CheckSquare className="w-4 h-4 text-blue-600" />
+                        <CheckSquare className="w-4 h-4 text-[#0378A6]" />
                       ) : (
                         <Square className="w-4 h-4 text-gray-400" />
                       )}
                     </Button>
                   </td>
-                  <td className="p-3 font-medium">
-                  <div className="flex items-center gap-2">
-                    <span>
-                      {app.appointment_time ? format(new Date(app.appointment_time), "d MMM yyyy, h:mm a", { locale: es }) : 'Fecha no válida'}
-                    </span>
+                  <td className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#0378A6]/10 rounded-lg flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-[#0378A6]" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {app.appointment_time ? format(new Date(app.appointment_time), "d MMM yyyy", { locale: es }) : 'Fecha no válida'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {app.appointment_time ? format(new Date(app.appointment_time), "h:mm a", { locale: es }) : ''}
+                      </p>
+                    </div>
                     {needsReminder(app) && (
                       <div className="relative" title="Recordatorio pendiente - Cita para mañana">
-                        <Bell className="w-4 h-4 text-orange-500 animate-pulse" />
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-ping"></span>
+                        <Bell className="w-5 h-5 text-amber-500 animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full animate-ping"></span>
                       </div>
                     )}
                   </div>
                 </td>
-                  <td className="p-3 hidden md:table-cell">{app.owner?.name || 'N/A'}</td>
-                  <td className="p-3 hidden lg:table-cell">{app.pet?.name || 'N/A'}</td>
-                  <td className="p-3 hidden xl:table-cell">
+                  <td className="p-4 hidden md:table-cell">
+                    <p className="font-medium text-gray-900">{app.owner?.name || 'N/A'}</p>
+                  </td>
+                  <td className="p-4 hidden lg:table-cell">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 font-medium text-sm">
+                      🐾 {app.pet?.name || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="p-4 hidden xl:table-cell">
                     {app.professional?.name ? (
-                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      <span className="text-sm bg-[#0378A6]/10 text-[#0378A6] px-3 py-1.5 rounded-lg font-medium">
                         {app.professional.name}
                       </span>
                     ) : app.assigned_professional_id ? (
-                      <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                      <span className="text-sm bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg">
                         ID: {app.assigned_professional_id}
                       </span>
                     ) : (
-                      <span className="text-gray-400 text-sm">No asignado</span>
+                      <span className="text-gray-400 text-sm italic">Sin asignar</span>
                     )}
                   </td>
-                  <td className="p-3">
-                    <Badge className={cn("capitalize", getStatusBadge(app.status))}>{statusTranslations[app.status] || statusTranslations.default}</Badge>
+                  <td className="p-4">
+                    <Badge className={cn("capitalize font-medium px-3 py-1", getStatusBadge(app.status))}>
+                      <span className={cn("w-1.5 h-1.5 rounded-full mr-1.5 inline-block", getStatusDot(app.status))}></span>
+                      {statusTranslations[app.status] || statusTranslations.default}
+                    </Badge>
                   </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
+                  <td className="p-4">
+                    <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         onClick={() => sendWhatsAppReminder(app)}
                         title="Enviar recordatorio por WhatsApp"
+                        className="hover:bg-green-50"
                       >
-                        <MessageCircle className="w-4 h-4 text-green-500" />
+                        <MessageCircle className="w-4 h-4 text-green-600" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(app)}>
-                        <Edit className="w-4 h-4 text-yellow-500" />
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(app)} className="hover:bg-amber-50">
+                        <Edit className="w-4 h-4 text-amber-600" />
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" className="hover:bg-red-50">
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="border-red-100">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Esto eliminará permanentemente la cita.
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                <Trash2 className="w-6 h-6 text-red-600" />
+                              </div>
+                              <AlertDialogTitle className="text-gray-900">¿Eliminar cita?</AlertDialogTitle>
+                            </div>
+                            <AlertDialogDescription className="mt-3 bg-red-50 p-3 rounded-lg border border-red-100">
+                              Esta acción no se puede deshacer. Se eliminará permanentemente la cita programada.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(app.id)} className="bg-red-500 hover:bg-red-600">Eliminar</AlertDialogAction>
+                          <AlertDialogFooter className="mt-4">
+                            <AlertDialogCancel className="border-gray-200">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(app.id)} className="bg-red-500 hover:bg-red-600">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar
+                            </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))
             )}
           </tbody>
@@ -1119,7 +1278,8 @@ Gracias por tu comprensión 🐾`}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
 

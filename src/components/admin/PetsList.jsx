@@ -453,9 +453,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
       if (loading) return <div className="flex justify-center items-center p-8"><div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-[#0378A6]"></div></div>;
 
       return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-lg p-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-[#0378A6]/10 p-6 border border-[#0378A6]/10">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Mascotas</h2>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0378A6] to-[#025d80] bg-clip-text text-transparent">Mascotas</h2>
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="w-4 h-4 mr-2" /> Añadir Mascota
             </Button>
@@ -486,13 +486,13 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead>
-                <tr className="border-b">
-                  <th className="p-3 w-16">Foto</th>
-                  <th className="p-3">Nombre</th>
-                  <th className="p-3 hidden md:table-cell">Propietario</th>
-                  <th className="p-3 hidden lg:table-cell">Raza</th>
-                  <th className="p-3">Acciones</th>
+              <thead className="bg-gradient-to-r from-[#0378A6] to-[#025d80]">
+                <tr>
+                  <th className="p-4 w-16 text-xs font-semibold text-white uppercase tracking-wider">Foto</th>
+                  <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Nombre</th>
+                  <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider hidden md:table-cell">Propietario</th>
+                  <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider hidden lg:table-cell">Raza</th>
+                  <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -500,7 +500,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
                   <tr key={pet.id} className="border-b hover:bg-gray-50">
                     <td className="p-3">
                         <img 
-                            src={pet.photo_url || 'https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/5b1a62d4e78298715d311910a3013c72.png'} 
+                            src={pet.photo_url || '/pet-placeholder.svg'} 
                             alt={pet.name} 
                             className="w-12 h-12 object-cover rounded-full bg-gray-200"
                         />

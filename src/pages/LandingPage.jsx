@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Heart, Scissors, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/customSupabaseClient';
+import { useCompany } from '@/contexts/CompanyContext';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { logo } = useCompany();
   const [landingImage, setLandingImage] = useState('https://images.unsplash.com/photo-1548681528-6a5c45b66b42?q=80&w=2535&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
   const [loading, setLoading] = useState(true);
   
@@ -80,7 +82,7 @@ const LandingPage = () => {
         <div className="flex-grow px-6 py-8">
           <div className="flex justify-center mb-8">
             <motion.img
-              src="https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/e00c42547df182c8547e11b986abb6b3.png"
+              src={logo}
               alt="4huellitas - Centro Veterinario"
               className="w-48 h-48 object-contain"
               initial={{ scale: 0.8, rotate: -10 }}

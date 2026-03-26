@@ -172,13 +172,13 @@ const OwnerProfile = () => {
   );
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="-m-4 md:-m-6 p-4 md:p-6">
       <Button onClick={() => navigate('/admin/owners')} variant="ghost" className="mb-4">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Volver a Propietarios
       </Button>
 
-      <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-[#0378A6]/10 p-6 md:p-8 border border-[#0378A6]/10">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             <div className="w-24 h-24 bg-gradient-to-br from-[#0378A6] to-[#F26513] rounded-full flex items-center justify-center text-white text-4xl font-bold">

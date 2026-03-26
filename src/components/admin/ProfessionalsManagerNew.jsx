@@ -423,14 +423,14 @@ const ProfessionalsManagerNew = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6 -m-4 md:-m-6 p-4 md:p-6">
+      <Card className="shadow-lg shadow-[#0378A6]/10 bg-white/95 backdrop-blur-sm border border-[#0378A6]/10">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Gestión de Profesionales
+            <Users className="h-5 w-5 text-[#0378A6]" />
+            <span className="bg-gradient-to-r from-[#0378A6] to-[#025d80] bg-clip-text text-transparent">Gestión de Profesionales</span>
           </CardTitle>
-          <Button onClick={handleAdd}>
+          <Button onClick={handleAdd} className="bg-[#0378A6] hover:bg-[#025d80]">
             <Plus className="h-4 w-4 mr-2" />
             Agregar Profesional
           </Button>

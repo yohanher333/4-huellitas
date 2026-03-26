@@ -213,7 +213,7 @@ const AchievementsRanking = () => {
     }
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-lg p-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-[#0378A6]/10 p-6 border border-[#0378A6]/10">
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
                 <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Award className="w-6 h-6 text-[#F26513]" /> Ranking de Logros</h2>
                 <div className="flex gap-3">
@@ -312,15 +312,15 @@ const AchievementsRanking = () => {
                     </Dialog>
                 </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-gray-200">
                 <table className="w-full text-left">
-                    <thead>
-                        <tr className="border-b">
-                            <th className="p-3 w-12">Rank</th>
-                            <th className="p-3">Usuario</th>
-                            <th className="p-3 hidden sm:table-cell">Logros</th>
-                            <th className="p-3 text-right">Puntos Actuales</th>
-                            <th className="p-3 text-center">Acciones</th>
+                    <thead className="bg-gradient-to-r from-[#0378A6] to-[#025d80]">
+                        <tr>
+                            <th className="p-3 w-12 text-white font-semibold">Rank</th>
+                            <th className="p-3 text-white font-semibold">Usuario</th>
+                            <th className="p-3 hidden sm:table-cell text-white font-semibold">Logros</th>
+                            <th className="p-3 text-right text-white font-semibold">Puntos Actuales</th>
+                            <th className="p-3 text-center text-white font-semibold">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>

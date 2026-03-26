@@ -76,10 +76,11 @@ export default function CompanySettings() {
   };
 
   return (
-    <Card className="max-w-xl mx-auto mt-8">
-      <CardHeader>
-        <CardTitle>Configuración de la Empresa</CardTitle>
-      </CardHeader>
+    <div className="-m-4 md:-m-6 p-4 md:p-6">
+      <Card className="max-w-xl mx-auto shadow-lg shadow-[#0378A6]/10 bg-white/95 backdrop-blur-sm border border-[#0378A6]/10">
+        <CardHeader>
+          <CardTitle className="bg-gradient-to-r from-[#0378A6] to-[#025d80] bg-clip-text text-transparent">Configuración de la Empresa</CardTitle>
+        </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <Input name="name" value={form.name} onChange={handleChange} placeholder="Nombre de la empresa" />
@@ -94,6 +95,7 @@ export default function CompanySettings() {
           <Button onClick={handleSave} disabled={loading}>{loading ? "Guardando..." : "Guardar"}</Button>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

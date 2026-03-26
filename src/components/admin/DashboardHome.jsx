@@ -354,10 +354,10 @@ const DashboardHome = () => {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
+            className="space-y-8 -m-4 md:-m-6 p-4 md:p-6 min-h-full"
         >
             {/* Header con tiempo real */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-[#0378A6]/10 shadow-sm">
                 <div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0378A6] to-[#F26513] bg-clip-text text-transparent">
                         Dashboard en Tiempo Real

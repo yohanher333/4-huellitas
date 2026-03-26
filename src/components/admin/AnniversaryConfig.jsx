@@ -305,14 +305,14 @@ const AnniversaryConfig = () => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      <Card>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 -m-4 md:-m-6 p-4 md:p-6">
+      <Card className="shadow-lg shadow-[#0378A6]/10 bg-white/95 backdrop-blur-sm border border-[#0378A6]/10">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Gift className="w-6 h-6 text-[#F26513]" />
-                Sistema de Aniversario
+                <span className="bg-gradient-to-r from-[#0378A6] to-[#025d80] bg-clip-text text-transparent">Sistema de Aniversario</span>
               </CardTitle>
               <CardDescription>Configura la ruleta de premios para celebrar el aniversario</CardDescription>
             </div>

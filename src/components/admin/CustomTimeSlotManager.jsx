@@ -375,14 +375,14 @@ const CustomTimeSlotManager = () => {
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
-      className="space-y-6"
+      className="space-y-6 -m-4 md:-m-6 p-4 md:p-6"
     >
       {/* Header */}
-      <Card className="shadow-lg border-l-4 border-l-[#0378A6]">
+      <Card className="shadow-lg shadow-[#0378A6]/10 border-l-4 border-l-[#0378A6] bg-white/95 backdrop-blur-sm border border-[#0378A6]/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-6 h-6 text-[#0378A6]" />
-            Gestión de Franjas Horarias Personalizadas
+            <span className="bg-gradient-to-r from-[#0378A6] to-[#025d80] bg-clip-text text-transparent">Gestión de Franjas Horarias Personalizadas</span>
           </CardTitle>
           <p className="text-gray-600 text-sm">
             Configura franjas horarias flexibles por día. Cada franja puede tener diferente duración 
@@ -392,7 +392,7 @@ const CustomTimeSlotManager = () => {
       </Card>
 
       {/* Day Selector */}
-      <Card>
+      <Card className="shadow-lg shadow-[#0378A6]/10 bg-white/95 backdrop-blur-sm border border-[#0378A6]/10">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <Label className="text-base font-medium">Seleccionar Día</Label>

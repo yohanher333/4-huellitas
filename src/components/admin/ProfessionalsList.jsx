@@ -87,7 +87,7 @@ const ProfessionalDialog = ({ isOpen, setIsOpen, professional, fetchProfessional
         <DialogHeader><DialogTitle>{professional ? 'Editar' : 'Añadir'} Profesional</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
             <div className="flex flex-col items-center gap-4">
-                <img src={photoPreview || 'https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/5b1a62d4e78298715d311910a3013c72.png'} alt="preview" className="w-24 h-24 rounded-full object-cover bg-gray-200"/>
+                <img src={photoPreview || '/pet-placeholder.svg'} alt="preview" className="w-24 h-24 rounded-full object-cover bg-gray-200"/>
                 <Button variant="outline" size="sm" onClick={() => photoInputRef.current?.click()}><Upload className="w-4 h-4 mr-2"/>Subir Foto</Button>
                 <Input ref={photoInputRef} id="photo-upload" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange}/>
             </div>
@@ -145,7 +145,7 @@ const ProfessionalsList = () => {
   if (loading) return <div className="flex justify-center items-center p-8"><div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-[#0378A6]"></div></div>;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-lg p-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-[#0378A6]/10 p-6 border border-[#0378A6]/10">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Profesionales</h2>
         <Button onClick={() => handleOpenDialog()}>
@@ -167,7 +167,7 @@ const ProfessionalsList = () => {
               <tr key={prof.id} className="border-b hover:bg-gray-50">
                 <td className="p-3">
                     <div className="flex items-center gap-3">
-                        <img src={prof.photo_url || 'https://horizons-cdn.hostinger.com/b8812eb8-c94d-4927-a06b-bd70992a5441/5b1a62d4e78298715d311910a3013c72.png'} alt={prof.name} className="w-10 h-10 rounded-full object-cover"/>
+                        <img src={prof.photo_url || '/pet-placeholder.svg'} alt={prof.name} className="w-10 h-10 rounded-full object-cover"/>
                         <span className="font-medium">{prof.name}</span>
                     </div>
                 </td>
